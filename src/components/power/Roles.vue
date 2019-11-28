@@ -1,0 +1,139 @@
+<template>
+  <div class="roles-container">
+    <el-breadcrumb separator-class="el-icon-arrow-right">
+      <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item>权限管理</el-breadcrumb-item>
+      <el-breadcrumb-item>角色列表</el-breadcrumb-item>
+    </el-breadcrumb>
+    <el-card class="box-card">
+      <el-button type="primary" class="btn-add">添加角色</el-button>
+      <template>
+        <el-table :data="rolesList" stripe border style="width: 100%">
+          <!-- 展开列 -->
+          <el-table-column type="expand">
+            <template v-slot="slotProps">
+              <el-row
+                :class="['bor-bottom', index1===0?'bor-top':'', 'v-center']"
+                v-for="(firstItem, index1) in slotProps.row.children"
+                :key="firstItem.id"
+              >
+                <!-- 一级权限 -->
+                <el-col :span="5" class="disflex">
+                  <el-tag
+                    closable
+                    @close="removeRightById(slotProps.row, firstItem.id)"
+                  >{{firstItem.authName}}</el-tag>
+                  <i class="el-icon-caret-right"></i>
+                </el-col>
+                <el-col :span="19">
+                  <!-- 二级权限 -->
+                  <el-row
+                    v-for="(secondItem, index2) in firstItem.children"
+                    :class="[index2===firstItem.children.length-1?'':'bor-bottom', 'v-center']"
+                    :key="secondItem.id"
+                  >
+                    <el-col :span="6">
+                      <el-tag
+                        type="success"
+                        closable
+                        @close="removeRightById(slotProps.row, secondItem.id)"
+                      >{{secondItem.authName}}</el-tag>
+                      <i class="el-icon-caret-right"></i>
+                    </el-col>
+                    <el-col :span="18">
+                      <!-- 三级权限 -->
+                      <el-tag
+                        type="warning"
+                        v-for="(thirdItem) in secondItem.children"
+                        :key="thirdItem.id"
+                        closable
+                        @close="removeRightById(slotProps.row, thirdItem.id)"
+                      >{{thirdItem.authName}}</el-tag>
+                    </el-col>
+                  </el-row>
+                </el-col>
+              </el-row>
+            </template>
+          </el-table-column>
+          <el-table-column type="index"></el-table-column>
+          <el-table-column prop="roleName" label="角色名称"></el-table-column>
+          <el-table-column prop="roleDesc" label="角色描述"></el-table-column>
+          <el-table-column label="操作">
+            <template v-slot="slotProps">
+              <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
+              <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+              <el-button size="mini" type="warning" icon="el-icon-setting">分配权限</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+    </el-card>
+  </div>
+</template>
+<script>
+export default {
+  data() {
+    return {
+      rolesList: []
+    }
+  },
+  created() {
+    this.getRolesList()
+  },
+  methods: {
+    async getRolesList() {
+      const { data } = await this.$http.get('/roles')
+      console.log(data)
+      if (data.meta.status !== 200) {
+        return this.$message.error(data.meta.msg)
+      }
+      this.rolesList = data.data
+    },
+    // 删除三级权限
+    async removeRightById(role, rightId) {
+      const res = await this.$confirm(
+        '此操作将永久删除该权限, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
+      if (res == 'confirm') {
+        const { data } = await this.$http.delete(
+          `/roles/${role.id}/rights/${rightId}`
+        )
+        if (data.meta.status !== 200) {
+          return this.$message.error(data.meta.msg)
+        }
+        role.children = data.data
+        this.$message.success(data.meta.msg)
+      }
+    }
+  }
+}
+</script>
+<style lang='less' scoped>
+.roles-container {
+  .box-card {
+    margin-top: 20px;
+    .btn-add {
+      margin-bottom: 20px;
+    }
+    .bor-top {
+      border-top: 1px solid #ccc;
+    }
+    .bor-bottom {
+      border-bottom: 1px solid #ccc;
+    }
+    .el-tag {
+      margin: 20px 10px;
+    }
+    .v-center {
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+</style>
