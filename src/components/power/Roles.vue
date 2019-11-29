@@ -6,7 +6,7 @@
       <el-breadcrumb-item>角色列表</el-breadcrumb-item>
     </el-breadcrumb>
     <el-card class="box-card">
-      <el-button type="primary" class="btn-add">添加角色</el-button>
+      <el-button type="primary" class="btn-add" @click="addRoleVisible = true">添加角色</el-button>
       <template>
         <el-table :data="rolesList" stripe border style="width: 100%">
           <!-- 展开列 -->
@@ -60,8 +60,12 @@
           <el-table-column prop="roleDesc" label="角色描述"></el-table-column>
           <el-table-column label="操作">
             <template v-slot="slotProps">
-              <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
-              <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+              <el-button
+                size="mini"
+                type="primary"
+                icon="el-icon-edit"
+              >编辑</el-button>
+              <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteRole(slotProps.row.id)">删除</el-button>
               <el-button
                 size="mini"
                 type="warning"
@@ -88,6 +92,20 @@
         <el-button type="primary" @click="completeRights">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog title="添加角色" :visible.sync="addRoleVisible" width="50%">
+      <el-form label-width="80px" :model="addRoleInfo" :rules="addRoleDialogRules" ref="addRoleRef">
+        <el-form-item label="角色名称" prop="roleName">
+          <el-input v-model="addRoleInfo.roleName"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述">
+          <el-input v-model="addRoleInfo.roleDesc"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addRoleVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addRole">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -105,7 +123,20 @@ export default {
       // 树表中默认选中的数组
       defKeys: [],
       // 当前dialog对应角色的id
-      currentRoleId: 0
+      currentRoleId: 0,
+      // 添加角色flag
+      addRoleVisible: false,
+      // 角色信息
+      addRoleInfo: {
+        roleName: '',
+        roleDesc: ''
+      },
+      addRoleDialogRules: {
+        roleName: [
+          { required: true, message: '请输入活动名称', trigger: 'blur' },
+          { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+        ]
+      }
     }
   },
   created() {
@@ -171,17 +202,51 @@ export default {
         `/roles/${this.currentRoleId}/rights`,
         { rids: arrStr }
       )
-      if(data.meta.status!==200){
+      if (data.meta.status !== 200) {
         return this.$message.error(data.meta.msg)
       }
       this.getRolesList()
       this.setRightDialaoVisible = false
       this.$message.success(data.meta.msg)
+    },
+    async addRole() {
+      if (!this.$refs.addRoleRef.validate) {
+        return this.$message.error('请正确填写角色信息')
+      }
+      const { data } = await this.$http.post('/roles', this.addRoleInfo)
+      if (data.meta.status !== 201) {
+        return this.$message.error(data.meta.msg)
+      }
+      this.getRolesList()
+      this.addRoleVisible = false
+      this.$message.success(data.meta.msg)
+    },
+    async deleteRole(id) {
+       const res = await this.$confirm(
+        '此操作将永久删除该用户, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
+      if (res === 'confirm') {
+        const { data } = await this.$http.delete(`/roles/${id}`)
+        if (data.meta.status !== 200) {
+          return this.$message.error(data.meta.msg)
+        }
+        this.getRolesList()
+        this.$message.success(data.meta.msg)
+      }
     }
   },
   watch: {
     setRightDialaoVisible: function() {
       !this.setRightDialaoVisible && (this.defKeys = [])
+    },
+    addRoleVisible: function() {
+      !this.addRoleVisible && this.$refs.addRoleRef.resetFields()
     }
   }
 }
