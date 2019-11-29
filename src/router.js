@@ -20,8 +20,8 @@ const router = new Router({
       children: [
         { path: '/welcome', component: Welcome },
         { path: '/users', component: Users },
-        { path: '/rights', component: Rights},
-        { path: '/roles', component: Roles}
+        { path: '/rights', component: Rights },
+        { path: '/roles', component: Roles }
       ] 
     }
   ]

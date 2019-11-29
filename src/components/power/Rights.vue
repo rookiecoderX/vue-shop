@@ -23,9 +23,6 @@
     </el-card>
   </div>
 </template>
-    </el-card>
-  </div>
-</template>
 <script>
 export default {
   data() {

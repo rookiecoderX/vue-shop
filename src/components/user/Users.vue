@@ -51,7 +51,12 @@
                 @click="open(slotProps.row.id)"
               ></el-button>
               <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
-                <el-button size="mini" type="warning" icon="el-icon-setting"></el-button>
+                <el-button
+                  size="mini"
+                  type="warning"
+                  icon="el-icon-setting"
+                  @click="showAddRoleDialog(slotProps.row)"
+                ></el-button>
               </el-tooltip>
             </template>
           </el-table-column>
@@ -111,6 +116,20 @@
         <el-button type="primary" @click="editUser">确 定</el-button>
       </div>
     </el-dialog>
+    <!-- 分配角色 -->
+    <el-dialog title="分配角色" :visible.sync="addRoleVisible">
+      <div>
+        <p>当前用户：{{userInfo.username}}</p>
+        <p>当前角色：{{userInfo.role_name}}</p>
+      </div>
+      <el-select v-model="selectedRoleId" placeholder="请选择">
+        <el-option v-for="item in rolesList" :key="item.id" :label="item.roleName" :value="item.id"></el-option>
+      </el-select>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addRoleVisible=false">取 消</el-button>
+        <el-button type="primary" @click="saveRoleEdit">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -168,6 +187,7 @@ export default {
       },
       users: [],
       total: 0,
+      // 编辑用户flag
       editDialogVisible: false,
       editFormInfo: {
         username: '',
@@ -178,6 +198,7 @@ export default {
         email: [{ validator: validateEmail, trigger: 'blur' }],
         mobile: [{ validator: validateMobile, trigger: 'blur' }]
       },
+      // 添加用户flag
       dialogFormVisible: false,
       addFormInfo: {
         username: '',
@@ -195,7 +216,12 @@ export default {
         checkPass: [{ validator: validatePass2, trigger: 'blur' }],
         email: [{ validator: validateEmail, trigger: 'blur' }],
         mobile: [{ validator: validateMobile, trigger: 'blur' }]
-      }
+      },
+      // 分配角色flag
+      addRoleVisible: false,
+      userInfo: {},
+      rolesList: [],
+      selectedRoleId: ''
     }
   },
   created() {
@@ -288,6 +314,31 @@ export default {
         this.getUserList()
         this.$message.success(data.meta.msg)
       }
+    },
+    // 分配角色对话框
+    async showAddRoleDialog(row) {
+      this.userInfo = row
+      console.log(row)
+      const { data } = await this.$http.get('/roles')
+      if (data.meta.status !== 200) {
+        return thsi.$message.error(data.meta.msg)
+      }
+      this.rolesList = data.data
+      this.addRoleVisible = true
+    },
+    async saveRoleEdit() {
+      if (this.selectedRoleId === '') {
+        return this.$message.error('请选择角色')
+      }
+      const { data } = await this.$http.put(`/users/${this.userInfo.id}/role`, {
+        rid: this.selectedRoleId
+      })
+      if (data.meta.status !== 200) {
+        return this.$message.error(data.meta.msg)
+      }
+      this.getUserList()
+      this.addRoleVisible = false
+      this.$message.success(data.meta.msg)
     }
   },
   watch: {
@@ -296,6 +347,9 @@ export default {
     },
     editDialogVisible: function(newValue) {
       !newValue && this.$refs.editDialogRef.resetFields()
+    },
+    addRoleVisible: function(newValue) {
+      !newValue&&(this.selectedRoleId='')
     }
   }
 }

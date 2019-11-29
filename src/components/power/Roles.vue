@@ -62,19 +62,50 @@
             <template v-slot="slotProps">
               <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
               <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
-              <el-button size="mini" type="warning" icon="el-icon-setting">分配权限</el-button>
+              <el-button
+                size="mini"
+                type="warning"
+                icon="el-icon-setting"
+                @click="showSetRightsDialog(slotProps.row)"
+              >分配权限</el-button>
             </template>
           </el-table-column>
         </el-table>
       </template>
     </el-card>
+    <el-dialog title="分配权限" :visible.sync="setRightDialaoVisible" width="50%">
+      <el-tree
+        ref="treeRef"
+        :data="allRights"
+        :props="defaultProps"
+        show-checkbox
+        default-expand-all
+        node-key="id"
+        :default-checked-keys="defKeys"
+      ></el-tree>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRightDialaoVisible = false">取 消</el-button>
+        <el-button type="primary" @click="completeRights">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
 export default {
   data() {
     return {
-      rolesList: []
+      rolesList: [],
+      setRightDialaoVisible: false,
+      // 所有权限
+      allRights: [],
+      defaultProps: {
+        label: 'authName',
+        children: 'children'
+      },
+      // 树表中默认选中的数组
+      defKeys: [],
+      // 当前dialog对应角色的id
+      currentRoleId: 0
     }
   },
   created() {
@@ -83,13 +114,12 @@ export default {
   methods: {
     async getRolesList() {
       const { data } = await this.$http.get('/roles')
-      console.log(data)
       if (data.meta.status !== 200) {
         return this.$message.error(data.meta.msg)
       }
       this.rolesList = data.data
     },
-    // 删除三级权限
+    // 删除权限
     async removeRightById(role, rightId) {
       const res = await this.$confirm(
         '此操作将永久删除该权限, 是否继续?',
@@ -100,7 +130,7 @@ export default {
           type: 'warning'
         }
       ).catch(err => err)
-      if (res == 'confirm') {
+      if (res === 'confirm') {
         const { data } = await this.$http.delete(
           `/roles/${role.id}/rights/${rightId}`
         )
@@ -110,6 +140,48 @@ export default {
         role.children = data.data
         this.$message.success(data.meta.msg)
       }
+    },
+    async showSetRightsDialog(role) {
+      const { data } = await this.$http.get('/rights/tree')
+      if (data.meta.status !== 200) {
+        return this.$message.error(data.meta.msg)
+      }
+      this.currentRoleId = role.id
+      this.allRights = data.data
+      this.getLeavesLists(role, this.defKeys)
+      this.setRightDialaoVisible = true
+    },
+    // 通过递归获取三级权限
+    getLeavesLists(node, arr) {
+      if (!node.children) {
+        return arr.push(node.id)
+      }
+      node.children.forEach(item => {
+        this.getLeavesLists(item, arr)
+      })
+    },
+    // 提交添加后的权限
+    async completeRights() {
+      const arr = [
+        ...this.$refs.treeRef.getCheckedKeys(),
+        ...this.$refs.treeRef.getHalfCheckedKeys()
+      ]
+      const arrStr = arr.join(',')
+      const { data } = await this.$http.post(
+        `/roles/${this.currentRoleId}/rights`,
+        { rids: arrStr }
+      )
+      if(data.meta.status!==200){
+        return this.$message.error(data.meta.msg)
+      }
+      this.getRolesList()
+      this.setRightDialaoVisible = false
+      this.$message.success(data.meta.msg)
+    }
+  },
+  watch: {
+    setRightDialaoVisible: function() {
+      !this.setRightDialaoVisible && (this.defKeys = [])
     }
   }
 }
