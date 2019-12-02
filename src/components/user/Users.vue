@@ -321,7 +321,7 @@ export default {
       console.log(row)
       const { data } = await this.$http.get('/roles')
       if (data.meta.status !== 200) {
-        return thsi.$message.error(data.meta.msg)
+        return this.$message.error(data.meta.msg)
       }
       this.rolesList = data.data
       this.addRoleVisible = true
@@ -349,7 +349,7 @@ export default {
       !newValue && this.$refs.editDialogRef.resetFields()
     },
     addRoleVisible: function(newValue) {
-      !newValue&&(this.selectedRoleId='')
+      !newValue && (this.selectedRoleId = '')
     }
   }
 }
