@@ -171,7 +171,7 @@ export default {
         `/roles/${this.currentRoleId}/rights`,
         { rids: arrStr }
       )
-      if(data.meta.status!==200){
+      if (data.meta.status !== 200) {
         return this.$message.error(data.meta.msg)
       }
       this.getRolesList()
