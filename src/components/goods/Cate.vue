@@ -63,8 +63,6 @@
             @change="selectedIdChanged"
           ></el-cascader>
         </el-form-item>
-      </el-form>
-      <el-form :model="addCateInfo" ref="addCateRef" label-width="80px" :rules="addCaterules">
         <el-form-item label="分类名称" prop="cat_name">
           <el-input v-model="addCateInfo.cat_name"></el-input>
         </el-form-item>
@@ -148,7 +146,8 @@ export default {
       this.parentCateList = data.data
     },
     selectedIdChanged() {
-      this.addCateInfo.cat_pid = this.selectedId[this.selectedId.length - 1] || 0
+      this.addCateInfo.cat_pid =
+        this.selectedId[this.selectedId.length - 1] || 0
       this.addCateInfo.cat_level = this.selectedId.length
     },
     submitAddCate() {
