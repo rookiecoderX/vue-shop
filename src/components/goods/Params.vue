@@ -179,7 +179,7 @@ export default {
       this.getAttributes()
     },
     async getAttributes() {
-      if (this.selectedId.length == 0) return
+      if (this.selectedId.length === 0) return
       const { data } = await this.$http.get(
         `/categories/${this.selectedId[this.selectedId.length - 1]}/attributes`,
         { params: { sel: this.activeName } }
@@ -252,14 +252,11 @@ export default {
             attr_vals: row.attr_vals.join(' ')
           }
         )
-        .catch(err => {
-          this.$message.error('添加失败')
-        })
     }
   },
   computed: {
     isUseAble: function() {
-      return this.selectedId == 0
+      return this.selectedId === 0
     },
     addDialogTitle: function() {
       return this.activeName === 'only' ? '静态属性' : '动态参数'
