@@ -60,12 +60,13 @@
           <el-table-column prop="roleDesc" label="角色描述"></el-table-column>
           <el-table-column label="操作">
             <template v-slot="slotProps">
+              <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
               <el-button
                 size="mini"
-                type="primary"
-                icon="el-icon-edit"
-              >编辑</el-button>
-              <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteRole(slotProps.row.id)">删除</el-button>
+                type="danger"
+                icon="el-icon-delete"
+                @click="deleteRole(slotProps.row.id)"
+              >删除</el-button>
               <el-button
                 size="mini"
                 type="warning"
@@ -222,7 +223,7 @@ export default {
       this.$message.success(data.meta.msg)
     },
     async deleteRole(id) {
-       const res = await this.$confirm(
+      const res = await this.$confirm(
         '此操作将永久删除该用户, 是否继续?',
         '提示',
         {
